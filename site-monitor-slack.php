@@ -2,12 +2,14 @@
 /**
  * Plugin Name: Site Monitor Slack NEOS
  * Description: Sends a Slack to RANE team when the site is down.
- * Version: 2.0
+ * Version: 2.2
  * Author: NEO
  */
 
-function site_monitor_slack_send_message($message) {
-    $slack_webhook_url = getenv('SLACK_WEBHOOK_URL');
+
+
+ function site_monitor_slack_send_message($message) {
+    $slack_webhook_url = get_option('site_monitor_slack_webhook_url');
 
     $payload = array(
         'text' => $message
@@ -25,10 +27,15 @@ function site_monitor_slack_check_site() {
     $site_url = get_site_url();
     $response = wp_remote_get($site_url);
 
-    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) != 200) {
+    if (is_wp_error($response) || wp_remote_retrieve_response_code($response) != 200 || !site_monitor_slack_check_database()) {
         $error_message = 'The site ' . $site_url . ' seems to be down. Please check it!';
         site_monitor_slack_send_message($error_message);
     }
+}
+
+function site_monitor_slack_check_database() {
+    global $wpdb;
+    return $wpdb->check_connection(false);
 }
 
 function site_monitor_slack_schedule_check() {
@@ -72,5 +79,4 @@ function site_monitor_slack_settings_page() {
     </div>
     <?php
 }
-
 
